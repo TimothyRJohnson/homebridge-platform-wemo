@@ -1,3 +1,10 @@
+/* eslint-disable @typescript-eslint/no-empty-function */
+/* eslint-disable no-empty */
+/* eslint-disable no-redeclare */
+/* eslint-disable @typescript-eslint/no-this-alias */
+/* eslint-disable max-len */
+/* eslint-disable @typescript-eslint/no-var-requires */
+/* eslint-disable no-undef */
 /* jshint node: true */
 // Wemo Platform Plugin for HomeBridge (https://github.com/nfarina/homebridge)
 //
@@ -15,7 +22,7 @@
 //      }
 // ],
 
-"use strict";
+'use strict';
 
 const DEFAULT_DOOR_OPEN_TIME = 20,
   DEFAULT_NO_MOTION_TIME = 60;
@@ -23,15 +30,15 @@ const DEFAULT_DOOR_OPEN_TIME = 20,
 const RELAY_MODE_SWITCH = 0,
   RELAY_MODE_MOMENTARY = 1;
 
-var Wemo = require("wemo-client"),
-  debug = require("debug")("homebridge-platform-wemo");
+import Wemo, { DEVICE_TYPE } from 'wemo-client';
+var debug = require('debug')('homebridge-platform-wemo');
 
 var Accessory, Characteristic, Consumption, Service, TotalConsumption, UUIDGen;
 var wemo = new Wemo();
 
 var doorOpenTimer, noMotionTimer;
 
-module.exports = function (homebridge) {
+export default function (homebridge) {
   Accessory = homebridge.platformAccessory;
   Characteristic = homebridge.hap.Characteristic;
   Service = homebridge.hap.Service;
@@ -40,62 +47,62 @@ module.exports = function (homebridge) {
   Consumption = function () {
     Characteristic.call(
       this,
-      "Consumption",
-      "E863F10D-079E-48FF-8F27-9C2605A29F52"
+      'Consumption',
+      'E863F10D-079E-48FF-8F27-9C2605A29F52',
     );
 
     this.setProps({
       format: Characteristic.Formats.UINT16,
-      unit: "W",
+      unit: 'W',
       perms: [Characteristic.Perms.READ, Characteristic.Perms.NOTIFY],
     });
 
     this.value = this.getDefaultValue();
   };
-  require("util").inherits(Consumption, Characteristic);
+  require('util').inherits(Consumption, Characteristic);
 
-  Consumption.UUID = "E863F10D-079E-48FF-8F27-9C2605A29F52";
+  Consumption.UUID = 'E863F10D-079E-48FF-8F27-9C2605A29F52';
 
   TotalConsumption = function () {
     Characteristic.call(
       this,
-      "Total Consumption",
-      "E863F10C-079E-48FF-8F27-9C2605A29F52"
+      'Total Consumption',
+      'E863F10C-079E-48FF-8F27-9C2605A29F52',
     );
 
     this.setProps({
       format: Characteristic.Formats.UINT32,
-      unit: "Wh", // change from kWh to Wh to have value significance for low mW draw
+      unit: 'Wh', // change from kWh to Wh to have value significance for low mW draw
       perms: [Characteristic.Perms.READ, Characteristic.Perms.NOTIFY],
     });
 
     this.value = this.getDefaultValue();
   };
-  require("util").inherits(TotalConsumption, Characteristic);
+  require('util').inherits(TotalConsumption, Characteristic);
 
-  TotalConsumption.UUID = "E863F10C-079E-48FF-8F27-9C2605A29F52";
+  TotalConsumption.UUID = 'E863F10C-079E-48FF-8F27-9C2605A29F52';
 
   homebridge.registerPlatform(
-    "homebridge-platform-wemo",
-    "BelkinWeMo",
+    'homebridge-platform-wemo',
+    'BelkinWeMo',
     WemoPlatform,
-    true
+    true,
   );
-};
+}
 
 function getSupportedMakerServices() {
   return [Service.GarageDoorOpener, Service.Switch];
 }
 
 function getServiceDescription(service) {
-  var name = "Unknown";
+  var name = 'Unknown';
 
   switch (service) {
     case Service.GarageDoorOpener:
-      name = "Garage Door Opener";
+      name = 'Garage Door Opener';
       break;
     case Service.Switch:
-      name = "Switch";
+      name = 'Switch';
       break;
   }
 
@@ -104,7 +111,7 @@ function getServiceDescription(service) {
 
 function WemoPlatform(log, config, api) {
   if (!config) {
-    log.warn("Ignoring WeMo Platform setup because it is not configured");
+    log.warn('Ignoring WeMo Platform setup because it is not configured');
     this.disabled = true;
     return;
   }
@@ -152,7 +159,7 @@ function WemoPlatform(log, config, api) {
     var uuid = UUIDGen.generate(device.UDN);
     var accessory;
 
-    if (device.deviceType === Wemo.DEVICE_TYPE.Bridge) {
+    if (device.deviceType === DEVICE_TYPE.Bridge) {
       var client = this.client(device, self.log);
 
       client.getEndDevices(function (err, enddevices) {
@@ -178,7 +185,7 @@ function WemoPlatform(log, config, api) {
               self.log,
               accessory,
               device,
-              enddevices[i]
+              enddevices[i],
             );
           }
         }
@@ -198,34 +205,34 @@ function WemoPlatform(log, config, api) {
         self.addAccessory(device);
       } else if (accessory instanceof WemoAccessory) {
         self.log(
-          "Online and can update device: %s [%s]",
+          'Online and can update device: %s [%s]',
           accessory.displayName,
-          device.macAddress
+          device.macAddress,
         );
         accessory.setupDevice(device);
         accessory.observeDevice(device);
       } else {
-        self.log("Online: %s [%s]", accessory.displayName, device.macAddress);
+        self.log('Online: %s [%s]', accessory.displayName, device.macAddress);
         self.accessories[uuid] = new WemoAccessory(self.log, accessory, device);
       }
     }
   };
 
   this.api.on(
-    "didFinishLaunching",
-    function () {
+    'didFinishLaunching',
+    () => {
       for (var i in this.manualDevices) {
         wemo.load(this.manualDevices[i], addDiscoveredDevice);
       }
 
-      if (this.discovery == true) {
+      if (this.discovery === true) {
         wemo.discover(addDiscoveredDevice);
       }
-    }.bind(this)
+    },
   );
 
-  if (this.discovery == true) {
-    setInterval(function () {
+  if (this.discovery === true) {
+    setInterval(() => {
       wemo.discover(addDiscoveredDevice);
     }, this.discoveryInterval * 1000);
   }
@@ -235,28 +242,28 @@ WemoPlatform.prototype.addAccessory = function (device) {
   var serviceType;
 
   switch (device.deviceType) {
-    case Wemo.DEVICE_TYPE.Insight:
-    case Wemo.DEVICE_TYPE.Switch:
+    case DEVICE_TYPE.Insight:
+    case DEVICE_TYPE.Switch:
       serviceType = Service.Outlet;
       break;
-    case Wemo.DEVICE_TYPE.LightSwitch:
+    case DEVICE_TYPE.LightSwitch:
       serviceType = Service.Switch;
       break;
-    case Wemo.DEVICE_TYPE.Dimmer:
+    case DEVICE_TYPE.Dimmer:
       serviceType = Service.Lightbulb;
       break;
-    case Wemo.DEVICE_TYPE.Motion:
-    case "urn:Belkin:device:NetCamSensor:1":
+    case DEVICE_TYPE.Motion:
+    case 'urn:Belkin:device:NetCamSensor:1':
       serviceType = Service.MotionSensor;
       break;
-    case Wemo.DEVICE_TYPE.Maker:
+    case DEVICE_TYPE.Maker:
       serviceType = Service.Switch;
       break;
     default:
       this.log(
-        "Not Supported: %s [%s]",
+        'Not Supported: %s [%s]',
         device.friendlyName,
-        device.deviceType
+        device.deviceType,
       );
   }
 
@@ -264,21 +271,21 @@ WemoPlatform.prototype.addAccessory = function (device) {
     return;
   }
 
-  this.log("Found: %s [%s]", device.friendlyName, device.macAddress);
+  this.log('Found: %s [%s]', device.friendlyName, device.macAddress);
 
   var accessory = new Accessory(
     device.friendlyName,
-    UUIDGen.generate(device.UDN)
+    UUIDGen.generate(device.UDN),
   );
   var service = accessory.addService(serviceType, device.friendlyName);
 
   switch (device.deviceType) {
-    case Wemo.DEVICE_TYPE.Insight:
+    case DEVICE_TYPE.Insight:
       //service.addCharacteristic(Characteristic.OutletInUse);
       service.addCharacteristic(Consumption);
       service.addCharacteristic(TotalConsumption);
       break;
-    case Wemo.DEVICE_TYPE.Dimmer:
+    case DEVICE_TYPE.Dimmer:
       service.addCharacteristic(Characteristic.Brightness);
       break;
   }
@@ -286,21 +293,21 @@ WemoPlatform.prototype.addAccessory = function (device) {
   this.accessories[accessory.UUID] = new WemoAccessory(
     this.log,
     accessory,
-    device
+    device,
   );
   this.api.registerPlatformAccessories(
-    "homebridge-platform-wemo",
-    "BelkinWeMo",
-    [accessory]
+    'homebridge-platform-wemo',
+    'BelkinWeMo',
+    [accessory],
   );
 };
 
 WemoPlatform.prototype.addLinkAccessory = function (link, device) {
-  this.log("Found: %s [%s]", device.friendlyName, device.deviceId);
+  this.log('Found: %s [%s]', device.friendlyName, device.deviceId);
 
   var accessory = new Accessory(
     device.friendlyName,
-    UUIDGen.generate(device.deviceId)
+    UUIDGen.generate(device.deviceId),
   );
   var service = accessory.addService(Service.Lightbulb, device.friendlyName);
 
@@ -316,12 +323,12 @@ WemoPlatform.prototype.addLinkAccessory = function (link, device) {
     this.log,
     accessory,
     link,
-    device
+    device,
   );
   this.api.registerPlatformAccessories(
-    "homebridge-platform-wemo",
-    "BelkinWeMo",
-    [accessory]
+    'homebridge-platform-wemo',
+    'BelkinWeMo',
+    [accessory],
   );
 };
 
@@ -332,12 +339,12 @@ WemoPlatform.prototype.configureAccessory = function (accessory) {
 WemoPlatform.prototype.configurationRequestHandler = function (
   context,
   request,
-  callback
+  callback,
 ) {
   var self = this;
   var respDict = {};
 
-  if (request && request.type === "Terminate") {
+  if (request && request.type === 'Terminate') {
     context.onScreen = null;
   }
 
@@ -346,9 +353,13 @@ WemoPlatform.prototype.configurationRequestHandler = function (
       .map(function (k) {
         return this[k] instanceof Accessory ? this[k] : this[k].accessory;
       }, self.accessories)
-      .sort(function (a, b) {
-        if (a.displayName < b.displayName) return -1;
-        if (a.displayName > b.displayName) return 1;
+      .sort((a, b) => {
+        if (a.displayName < b.displayName) {
+          return -1;
+        }
+        if (a.displayName > b.displayName) {
+          return 1;
+        }
         return 0;
       });
 
@@ -358,29 +369,29 @@ WemoPlatform.prototype.configurationRequestHandler = function (
   };
 
   switch (context.onScreen) {
-    case "DoRemove":
+    case 'DoRemove':
       if (request.response.selections) {
         for (var i in request.response.selections.sort()) {
           this.removeAccessory(
-            context.sortedAccessories[request.response.selections[i]]
+            context.sortedAccessories[request.response.selections[i]],
           );
         }
 
         respDict = {
-          type: "Interface",
-          interface: "instruction",
-          title: "Finished",
-          detail: "Accessory removal was successful.",
+          type: 'Interface',
+          interface: 'instruction',
+          title: 'Finished',
+          detail: 'Accessory removal was successful.',
         };
 
         context.onScreen = null;
         callback(respDict);
       } else {
         context.onScreen = null;
-        callback(respDict, "platform", true, this.config);
+        callback(respDict, 'platform', true, this.config);
       }
       break;
-    case "DoModify":
+    case 'DoModify':
       context.accessory =
         context.sortedAccessories[request.response.selections[0]];
       context.onScreenSelection = [];
@@ -388,31 +399,31 @@ WemoPlatform.prototype.configurationRequestHandler = function (
 
       var items = [];
 
-      if (context.accessory.context.deviceType === Wemo.DEVICE_TYPE.Maker) {
-        items.push("Change Service");
+      if (context.accessory.context.deviceType === DEVICE_TYPE.Maker) {
+        items.push('Change Service');
         context.onScreenSelection.push({
-          action: "change",
-          item: "service",
-          screen: "ChangeService",
+          action: 'change',
+          item: 'service',
+          screen: 'ChangeService',
         });
       }
 
       respDict = {
-        type: "Interface",
-        interface: "list",
-        title: "Select action for " + context.accessory.displayName,
+        type: 'Interface',
+        interface: 'list',
+        title: 'Select action for ' + context.accessory.displayName,
         allowMultipleSelection: false,
         items: items,
       };
 
-      context.onScreen = "ModifyAccessory";
+      context.onScreen = 'ModifyAccessory';
 
       callback(respDict);
       break;
-    case "ModifyAccessory":
+    case 'ModifyAccessory':
       if (!request.response.selections) {
         context.onScreen = null;
-        callback(respDict, "platform", true, this.config);
+        callback(respDict, 'platform', true, this.config);
       }
 
       var selection = context.onScreenSelection[request.response.selections[0]];
@@ -422,8 +433,8 @@ WemoPlatform.prototype.configurationRequestHandler = function (
       var items = [];
 
       if (
-        context.accessory.context.deviceType === Wemo.DEVICE_TYPE.Maker &&
-        context.accessory.context.switchMode == RELAY_MODE_MOMENTARY
+        context.accessory.context.deviceType === DEVICE_TYPE.Maker &&
+        context.accessory.context.switchMode === RELAY_MODE_MOMENTARY
       ) {
         var services = getSupportedMakerServices();
 
@@ -440,29 +451,29 @@ WemoPlatform.prototype.configurationRequestHandler = function (
       }
 
       respDict = {
-        type: "Interface",
-        interface: "list",
-        title: "Select " + selection.item + " to " + selection.action,
+        type: 'Interface',
+        interface: 'list',
+        title: 'Select ' + selection.item + ' to ' + selection.action,
         allowMultipleSelection: false,
         items: items,
       };
 
       callback(respDict);
       break;
-    case "ChangeService":
+    case 'ChangeService':
       if (!request.response.selections) {
         context.onScreen = null;
-        callback(respDict, "platform", true, this.config);
+        callback(respDict, 'platform', true, this.config);
       }
 
       var item =
-        context["can" + context.onScreen][request.response.selections[0]];
+        context['can' + context.onScreen][request.response.selections[0]];
 
       respDict = {
-        type: "Interface",
-        interface: "instruction",
-        title: "Finished",
-        detail: "Accessory service change failed.",
+        type: 'Interface',
+        interface: 'instruction',
+        title: 'Finished',
+        detail: 'Accessory service change failed.',
       };
 
       try {
@@ -470,76 +481,76 @@ WemoPlatform.prototype.configurationRequestHandler = function (
         accessory.accessory.context.serviceType = item.UUID;
         accessory.updateMakerMode();
 
-        respDict["detail"] = "Accessory service change was successful.";
+        respDict['detail'] = 'Accessory service change was successful.';
       } catch (e) {}
 
       context.onScreen = null;
       callback(respDict);
       break;
-    case "Menu":
+    case 'Menu':
       switch (request.response.selections[0]) {
         case 0:
-          context.onScreen = "Modify";
+          context.onScreen = 'Modify';
           break;
         case 1:
-          context.onScreen = "Remove";
+          context.onScreen = 'Remove';
           break;
         case 2:
-          context.onScreen = "Configuration";
+          context.onScreen = 'Configuration';
           break;
       }
 
-      if (context.onScreen != "Configuration") {
+      if (context.onScreen !== 'Configuration') {
         respDict = {
-          type: "Interface",
-          interface: "list",
-          title: "Select accessory to " + context.onScreen.toLowerCase(),
-          allowMultipleSelection: context.onScreen == "Remove",
+          type: 'Interface',
+          interface: 'list',
+          title: 'Select accessory to ' + context.onScreen.toLowerCase(),
+          allowMultipleSelection: context.onScreen === 'Remove',
           items: sortAccessories(),
         };
 
-        context.onScreen = "Do" + context.onScreen;
+        context.onScreen = 'Do' + context.onScreen;
         callback(respDict);
         break;
       }
 
       respDict = {
-        type: "Interface",
-        interface: "list",
-        title: "Select Option",
+        type: 'Interface',
+        interface: 'list',
+        title: 'Select Option',
         allowMultipleSelection: false,
-        items: ["Ignored Devices"],
+        items: ['Ignored Devices'],
       };
 
       callback(respDict);
       break;
-    case "Configuration":
+    case 'Configuration':
       respDict = {
-        type: "Interface",
-        interface: "list",
-        title: "Modify Ignored Devices",
+        type: 'Interface',
+        interface: 'list',
+        title: 'Modify Ignored Devices',
         allowMultipleSelection: false,
         items:
           this.ignoredDevices.length > 0
-            ? ["Add Accessory", "Remove Accessory"]
-            : ["Add Accessory"],
+            ? ['Add Accessory', 'Remove Accessory']
+            : ['Add Accessory'],
       };
 
-      context.onScreen = "IgnoreList";
+      context.onScreen = 'IgnoreList';
 
       callback(respDict);
       break;
-    case "IgnoreList":
+    case 'IgnoreList':
       context.onScreen =
-        request && request.response && request.response.selections[0] == 1
-          ? "IgnoreListRemove"
-          : "IgnoreListAdd";
+        request && request.response && request.response.selections[0] === 1
+          ? 'IgnoreListRemove'
+          : 'IgnoreListAdd';
 
-      if (context.onScreen == "IgnoreListAdd") {
+      if (context.onScreen === 'IgnoreListAdd') {
         respDict = {
-          type: "Interface",
-          interface: "list",
-          title: "Select accessory to add to Ignored Devices",
+          type: 'Interface',
+          interface: 'list',
+          title: 'Select accessory to add to Ignored Devices',
           allowMultipleSelection: true,
           items: sortAccessories(),
         };
@@ -547,9 +558,9 @@ WemoPlatform.prototype.configurationRequestHandler = function (
         context.selection = JSON.parse(JSON.stringify(this.ignoredDevices));
 
         respDict = {
-          type: "Interface",
-          interface: "list",
-          title: "Select accessory to remove from Ignored Devices",
+          type: 'Interface',
+          interface: 'list',
+          title: 'Select accessory to remove from Ignored Devices',
           allowMultipleSelection: true,
           items: context.selection,
         };
@@ -557,7 +568,7 @@ WemoPlatform.prototype.configurationRequestHandler = function (
 
       callback(respDict);
       break;
-    case "IgnoreListAdd":
+    case 'IgnoreListAdd':
       if (request.response.selections) {
         for (var i in request.response.selections.sort()) {
           var accessory =
@@ -566,7 +577,7 @@ WemoPlatform.prototype.configurationRequestHandler = function (
           if (
             accessory.context &&
             accessory.context.id &&
-            this.ignoredDevices.indexOf(accessory.context.id) == -1
+            this.ignoredDevices.indexOf(accessory.context.id) === -1
           ) {
             this.ignoredDevices.push(accessory.context.id);
           }
@@ -577,23 +588,23 @@ WemoPlatform.prototype.configurationRequestHandler = function (
         this.config.ignoredDevices = this.ignoredDevices;
 
         respDict = {
-          type: "Interface",
-          interface: "instruction",
-          title: "Finished",
-          detail: "Ignore List update was successful.",
+          type: 'Interface',
+          interface: 'instruction',
+          title: 'Finished',
+          detail: 'Ignore List update was successful.',
         };
       }
 
       context.onScreen = null;
-      callback(respDict, "platform", true, this.config);
+      callback(respDict, 'platform', true, this.config);
       break;
 
-    case "IgnoreListRemove":
+    case 'IgnoreListRemove':
       if (request.response.selections) {
         for (var i in request.response.selections) {
           var id = context.selection[request.response.selections[i]];
 
-          if (this.ignoredDevices.indexOf(id) != -1) {
+          if (this.ignoredDevices.indexOf(id) !== -1) {
             this.ignoredDevices.splice(this.ignoredDevices.indexOf(id), 1);
           }
         }
@@ -606,38 +617,38 @@ WemoPlatform.prototype.configurationRequestHandler = function (
       }
 
       context.onScreen = null;
-      callback(respDict, "platform", true, this.config);
+      callback(respDict, 'platform', true, this.config);
       break;
     default:
-      if (request && (request.response || request.type === "Terminate")) {
+      if (request && (request.response || request.type === 'Terminate')) {
         context.onScreen = null;
-        callback(respDict, "platform", true, this.config);
+        callback(respDict, 'platform', true, this.config);
       } else {
         respDict = {
-          type: "Interface",
-          interface: "list",
-          title: "Select option",
+          type: 'Interface',
+          interface: 'list',
+          title: 'Select option',
           allowMultipleSelection: false,
-          items: ["Modify Accessory", "Remove Accessory", "Configuration"],
+          items: ['Modify Accessory', 'Remove Accessory', 'Configuration'],
         };
 
-        context.onScreen = "Menu";
+        context.onScreen = 'Menu';
         callback(respDict);
       }
   }
 };
 
 WemoPlatform.prototype.removeAccessory = function (accessory) {
-  this.log("Remove Accessory: %s", accessory.displayName);
+  this.log('Remove Accessory: %s', accessory.displayName);
 
   if (this.accessories[accessory.UUID]) {
     delete this.accessories[accessory.UUID];
   }
 
   this.api.unregisterPlatformAccessories(
-    "homebridge-platform-wemo",
-    "BelkinWeMo",
-    [accessory]
+    'homebridge-platform-wemo',
+    'BelkinWeMo',
+    [accessory],
   );
 };
 
@@ -654,13 +665,13 @@ function WemoAccessory(log, accessory, device) {
 
   this.accessory
     .getService(Service.AccessoryInformation)
-    .setCharacteristic(Characteristic.Manufacturer, "Belkin WeMo")
+    .setCharacteristic(Characteristic.Manufacturer, 'Belkin WeMo')
     .setCharacteristic(Characteristic.Model, device.modelName)
     .setCharacteristic(Characteristic.SerialNumber, device.serialNumber)
     .setCharacteristic(Characteristic.FirmwareRevision, device.firmwareVersion);
 
-  this.accessory.on("identify", function (paired, callback) {
-    self.log("%s - identify", self.accessory.displayName);
+  this.accessory.on('identify', (paired, callback) => {
+    self.log('%s - identify', self.accessory.displayName);
     callback();
   });
 
@@ -670,7 +681,7 @@ function WemoAccessory(log, accessory, device) {
 
 WemoAccessory.prototype.addEventHandler = function (
   serviceName,
-  characteristic
+  characteristic,
 ) {
   serviceName = serviceName || Service.Switch;
 
@@ -693,17 +704,17 @@ WemoAccessory.prototype.addEventHandler = function (
     case Characteristic.On:
       service
         .getCharacteristic(characteristic)
-        .on("set", this.setSwitchState.bind(this));
+        .on('set', this.setSwitchState.bind(this));
       break;
     case Characteristic.TargetDoorState:
       service
         .getCharacteristic(characteristic)
-        .on("set", this.setTargetDoorState.bind(this));
+        .on('set', this.setTargetDoorState.bind(this));
       break;
     case Characteristic.Brightness:
       service
         .getCharacteristic(characteristic)
-        .on("set", this.setBrightness.bind(this));
+        .on('set', this.setBrightness.bind(this));
       break;
   }
 };
@@ -714,7 +725,7 @@ WemoAccessory.prototype.addEventHandlers = function () {
   this.addEventHandler(Service.Lightbulb, Characteristic.Brightness);
   this.addEventHandler(
     Service.GarageDoorOpener,
-    Characteristic.TargetDoorState
+    Characteristic.TargetDoorState,
   );
 };
 
@@ -722,7 +733,7 @@ WemoAccessory.prototype.getAttributes = function (callback) {
   callback = callback || function () {};
 
   this.client.getAttributes(
-    function (err, attributes) {
+    (err, attributes) => {
       if (err) {
         this.log(err);
         callback();
@@ -733,17 +744,17 @@ WemoAccessory.prototype.getAttributes = function (callback) {
       this.accessory.context.switchMode = attributes.SwitchMode;
       this.updateMakerMode();
 
-      if (attributes.SensorPresent == 1) {
+      if (attributes.SensorPresent === 1) {
         if (this.accessory.getService(Service.Switch) !== undefined) {
           if (this.accessory.getService(Service.ContactSensor) === undefined) {
             this.log(
-              "%s - Add Service: %s",
+              '%s - Add Service: %s',
               this.accessory.displayName,
-              "Service.ContactSensor"
+              'Service.ContactSensor',
             );
             this.accessory.addService(
               Service.ContactSensor,
-              this.accessory.displayName
+              this.accessory.displayName,
             );
           }
         } else if (
@@ -758,9 +769,9 @@ WemoAccessory.prototype.getAttributes = function (callback) {
 
         if (contactSensor !== undefined) {
           this.log(
-            "%s - Remove Service: %s",
+            '%s - Remove Service: %s',
             this.accessory.displayName,
-            "Service.ContactSensor"
+            'Service.ContactSensor',
           );
           this.accessory.removeService(contactSensor);
         }
@@ -773,25 +784,25 @@ WemoAccessory.prototype.getAttributes = function (callback) {
       }
 
       callback();
-    }.bind(this)
+    },
   );
 };
 
 WemoAccessory.prototype.getSwitchState = function (callback) {
-  if (this.device.deviceType === Wemo.DEVICE_TYPE.Maker) {
+  if (this.device.deviceType === DEVICE_TYPE.Maker) {
     this.getAttributes(
-      function () {
+      () => {
         callback(
           null,
           this.accessory
             .getService(Service.Switch)
-            .getCharacteristic(Characteristic.On).value
+            .getCharacteristic(Characteristic.On).value,
         );
-      }.bind(this)
+      },
     );
   } else {
     this.client.getBinaryState(
-      function (err, state) {
+      (err, state) => {
         if (err) {
           var service =
             this.accessory.getService(Service.Switch) ||
@@ -801,26 +812,26 @@ WemoAccessory.prototype.getSwitchState = function (callback) {
         }
 
         callback(null, this.updateSwitchState(state));
-      }.bind(this)
+      },
     );
   }
 };
 
 WemoAccessory.prototype.observeDevice = function (device) {
-  if (device.deviceType === Wemo.DEVICE_TYPE.Maker) {
+  if (device.deviceType === DEVICE_TYPE.Maker) {
     this.getAttributes();
 
     this.client.on(
-      "attributeList",
-      function (name, value, prevalue, timestamp) {
+      'attributeList',
+      (name, value, prevalue, timestamp) => {
         switch (name) {
-          case "Switch":
+          case 'Switch':
             if (this.accessory.getService(Service.Switch) !== undefined) {
               this.updateSwitchState(value);
             } else if (
               this.accessory.getService(Service.GarageDoorOpener) !== undefined
             ) {
-              if (value == 1) {
+              if (value === 1) {
                 // Triggered through HomeKit
                 if (this.homekitTriggered === true) {
                   delete this.homekitTriggered;
@@ -834,9 +845,9 @@ WemoAccessory.prototype.observeDevice = function (device) {
                     ? Characteristic.TargetDoorState.OPEN
                     : Characteristic.TargetDoorState.CLOSED;
                   this.log(
-                    "%s - Set Target Door State: %s (triggered by Maker)",
+                    '%s - Set Target Door State: %s (triggered by Maker)',
                     this.accessory.displayName,
-                    state ? "Closed" : "Open"
+                    state ? 'Closed' : 'Open',
                   );
                   targetDoorState.updateValue(state);
                   this.setDoorMoving(state);
@@ -844,34 +855,34 @@ WemoAccessory.prototype.observeDevice = function (device) {
               }
             }
             break;
-          case "Sensor":
+          case 'Sensor':
             this.updateSensorState(value, true);
             break;
         }
-      }.bind(this)
+      },
     );
   } else {
     this.client.on(
-      "binaryState",
-      function (state) {
+      'binaryState',
+      (state) => {
         if (
-          this.device.deviceType === Wemo.DEVICE_TYPE.Motion ||
-          this.device.deviceType === "urn:Belkin:device:NetCamSensor:1"
+          this.device.deviceType === DEVICE_TYPE.Motion ||
+          this.device.deviceType === 'urn:Belkin:device:NetCamSensor:1'
         ) {
           this.updateMotionDetected(state);
         } else {
           this.updateSwitchState(state);
         }
-      }.bind(this)
+      },
     );
   }
 
-  if (device.deviceType === Wemo.DEVICE_TYPE.Insight) {
-    this.client.on("insightParams", this.updateInsightParams.bind(this));
+  if (device.deviceType === DEVICE_TYPE.Insight) {
+    this.client.on('insightParams', this.updateInsightParams.bind(this));
   }
 
-  if (device.deviceType === Wemo.DEVICE_TYPE.Dimmer) {
-    this.client.on("brightness", this.updateBrightness.bind(this));
+  if (device.deviceType === DEVICE_TYPE.Dimmer) {
+    this.client.on('brightness', this.updateBrightness.bind(this));
   }
 };
 
@@ -879,7 +890,7 @@ WemoAccessory.prototype.removeMakerServices = function (service) {
   var services = getSupportedMakerServices();
 
   for (var index in services) {
-    if (services[index] == service) {
+    if (services[index] === service) {
       continue;
     }
 
@@ -891,7 +902,7 @@ WemoAccessory.prototype.removeMakerServices = function (service) {
 
 WemoAccessory.prototype.setDoorMoving = function (
   targetDoorState,
-  homekitTriggered
+  homekitTriggered,
 ) {
   var service = this.accessory.getService(Service.GarageDoorOpener);
 
@@ -906,14 +917,14 @@ WemoAccessory.prototype.setDoorMoving = function (
 
     // Toggle TargetDoorState after receiving a stop
     setTimeout(
-      function (obj, state) {
+      (obj, state) => {
         obj.updateValue(state);
       },
       500,
       service.getCharacteristic(Characteristic.TargetDoorState),
-      targetDoorState == Characteristic.TargetDoorState.OPEN
+      targetDoorState === Characteristic.TargetDoorState.OPEN
         ? Characteristic.TargetDoorState.CLOSED
-        : Characteristic.TargetDoorState.OPEN
+        : Characteristic.TargetDoorState.OPEN,
     );
     return;
   }
@@ -922,18 +933,18 @@ WemoAccessory.prototype.setDoorMoving = function (
 
   if (homekitTriggered === true) {
     var currentDoorState = service.getCharacteristic(
-      Characteristic.CurrentDoorState
+      Characteristic.CurrentDoorState,
     );
 
-    if (targetDoorState == Characteristic.TargetDoorState.CLOSED) {
-      if (currentDoorState.value != Characteristic.CurrentDoorState.CLOSED) {
+    if (targetDoorState === Characteristic.TargetDoorState.CLOSED) {
+      if (currentDoorState.value !== Characteristic.CurrentDoorState.CLOSED) {
         this.updateCurrentDoorState(Characteristic.CurrentDoorState.CLOSING);
       }
-    } else if (targetDoorState == Characteristic.TargetDoorState.OPEN) {
+    } else if (targetDoorState === Characteristic.TargetDoorState.OPEN) {
       if (
         (this.sensorPresent !== true &&
-          currentDoorState.value != Characteristic.CurrentDoorState.OPEN) ||
-        currentDoorState.value == Characteristic.CurrentDoorState.STOPPED
+          currentDoorState.value !== Characteristic.CurrentDoorState.OPEN) ||
+        currentDoorState.value === Characteristic.CurrentDoorState.STOPPED
       ) {
         this.updateCurrentDoorState(Characteristic.CurrentDoorState.OPENING);
       }
@@ -941,7 +952,7 @@ WemoAccessory.prototype.setDoorMoving = function (
   }
 
   this.movingTimer = setTimeout(
-    function (self) {
+    (self) => {
       delete self.movingTimer;
       delete self.isMoving;
 
@@ -953,7 +964,7 @@ WemoAccessory.prototype.setDoorMoving = function (
         self.updateCurrentDoorState(
           targetDoorState.value
             ? Characteristic.CurrentDoorState.CLOSED
-            : Characteristic.CurrentDoorState.OPEN
+            : Characteristic.CurrentDoorState.OPEN,
         );
         return;
       }
@@ -961,7 +972,7 @@ WemoAccessory.prototype.setDoorMoving = function (
       self.getAttributes();
     },
     doorOpenTimer * 1000,
-    this
+    this,
   );
 };
 
@@ -974,44 +985,44 @@ WemoAccessory.prototype.setSwitchState = function (state, callback) {
   var switchState = service.getCharacteristic(Characteristic.On);
   callback = callback || function () {};
 
-  if (switchState.value != value) {
+  if (switchState.value !== value) {
     //remove redundent calls to setBinaryState when requested state is already achieved
     this.client.setBinaryState(
       value,
-      function (err) {
+      (err) => {
         if (!err) {
           this.log(
-            "%s - Set state: %s",
+            '%s - Set state: %s',
             this.accessory.displayName,
-            value ? "On" : "Off"
+            value ? 'On' : 'Off',
           );
           callback(null);
 
           // for dimmer, poll brightness for ON events (supports night mode)
-          if (value && this.device.deviceType === Wemo.DEVICE_TYPE.Dimmer) {
+          if (value && this.device.deviceType === DEVICE_TYPE.Dimmer) {
             this.client.getBrightness(
-              function (err, brightness) {
+              (err, brightness) => {
                 if (err) {
                   this.log(
-                    "%s - Error ON brightness",
-                    this.accessory.displayName
+                    '%s - Error ON brightness',
+                    this.accessory.displayName,
                   );
                   return;
                 }
                 this.updateBrightness(brightness);
-              }.bind(this)
+              },
             );
           }
         } else {
           this.log(
-            "%s - Set state FAILED: %s. Error: %s",
+            '%s - Set state FAILED: %s. Error: %s',
             this.accessory.displayName,
-            value ? "on" : "off",
-            err.code
+            value ? 'on' : 'off',
+            err.code,
           );
           callback(new Error(err));
         }
-      }.bind(this)
+      },
     );
   } else {
     callback(null);
@@ -1021,7 +1032,7 @@ WemoAccessory.prototype.setSwitchState = function (state, callback) {
 WemoAccessory.prototype.setBrightness = function (value, callback) {
   callback = callback || function () {};
 
-  if (this.brightness == value) {
+  if (this.brightness === value) {
     callback(null);
     return;
   }
@@ -1030,35 +1041,35 @@ WemoAccessory.prototype.setBrightness = function (value, callback) {
 
   //defer the actual update to smooth out changes from sliders
   setTimeout(
-    function (caller, value) {
+    (caller, value) => {
       //check that we actually have a change to make and that something
       //hasn't tried to update the brightness again in the last 0.1 seconds
-      if (caller.brightness !== value && caller._brightness == value) {
+      if (caller.brightness !== value && caller._brightness === value) {
         caller.client.setBrightness(
           value,
           function (err) {
             if (err) {
               this.log(
-                "%s - Set brightness FAILED: %s. Error: %s",
+                '%s - Set brightness FAILED: %s. Error: %s',
                 this.accessory.displayName,
                 value,
-                err.code
+                err.code,
               );
             } else {
               caller.log(
-                "%s - Set brightness: %s%",
+                '%s - Set brightness: %s%',
                 caller.accessory.displayName,
-                value
+                value,
               );
               caller.brightness = value;
             }
-          }.bind(caller)
+          }.bind(caller),
         );
       }
     },
     100,
     this,
-    value
+    value,
   );
 
   callback(null);
@@ -1076,33 +1087,33 @@ WemoAccessory.prototype.setTargetDoorState = function (state, callback) {
 
   if (this.isMoving !== true) {
     if (
-      value == Characteristic.TargetDoorState.CLOSED &&
-      currentDoorState.value == Characteristic.CurrentDoorState.CLOSED
+      value === Characteristic.TargetDoorState.CLOSED &&
+      currentDoorState.value === Characteristic.CurrentDoorState.CLOSED
     ) {
-      this.log("Door already closed");
+      this.log('Door already closed');
       callback(null);
       return;
     } else if (
-      value == Characteristic.TargetDoorState.OPEN &&
-      currentDoorState.value == Characteristic.CurrentDoorState.OPEN
+      value === Characteristic.TargetDoorState.OPEN &&
+      currentDoorState.value === Characteristic.CurrentDoorState.OPEN
     ) {
-      this.log("Door already open");
+      this.log('Door already open');
       callback(null);
       return;
     }
   } else {
     if (
-      value == Characteristic.TargetDoorState.CLOSED &&
-      currentDoorState.value == Characteristic.CurrentDoorState.CLOSING
+      value === Characteristic.TargetDoorState.CLOSED &&
+      currentDoorState.value === Characteristic.CurrentDoorState.CLOSING
     ) {
-      this.log("Door already closing");
+      this.log('Door already closing');
       callback(null);
       return;
     } else if (
-      value == Characteristic.TargetDoorState.OPEN &&
-      currentDoorState.value == Characteristic.CurrentDoorState.OPENING
+      value === Characteristic.TargetDoorState.OPEN &&
+      currentDoorState.value === Characteristic.CurrentDoorState.OPENING
     ) {
-      this.log("Door already opening");
+      this.log('Door already opening');
       callback(null);
       return;
     }
@@ -1110,12 +1121,12 @@ WemoAccessory.prototype.setTargetDoorState = function (state, callback) {
 
   this.client.setBinaryState(
     1,
-    function (err) {
+    (err) => {
       if (!err) {
         this.log(
-          "%s - Set Target Door State: %s (triggered by HomeKit)",
+          '%s - Set Target Door State: %s (triggered by HomeKit)',
           this.accessory.displayName,
-          value ? "Closed" : "Open"
+          value ? 'Closed' : 'Open',
         );
 
         this.setDoorMoving(value, true);
@@ -1123,14 +1134,14 @@ WemoAccessory.prototype.setTargetDoorState = function (state, callback) {
         callback(null);
       } else {
         this.log(
-          "%s - Set state FAILED: %s. Error: %s",
+          '%s - Set state FAILED: %s. Error: %s',
           this.accessory.displayName,
-          value ? "on" : "off",
-          err.code
+          value ? 'on' : 'off',
+          err.code,
         );
         callback(new Error(err));
       }
-    }.bind(this)
+    },
   );
 };
 
@@ -1139,10 +1150,10 @@ WemoAccessory.prototype.setupDevice = function (device) {
   this.client = wemo.client(device);
 
   this.client.on(
-    "error",
-    function (err) {
-      this.log("%s reported error %s", this.accessory.displayName, err.code);
-    }.bind(this)
+    'error',
+    (err) => {
+      this.log('%s reported error %s', this.accessory.displayName, err.code);
+    },
   );
 };
 
@@ -1151,11 +1162,11 @@ WemoAccessory.prototype.updateBrightness = function (newBrightness) {
     .getService(Service.Lightbulb)
     .getCharacteristic(Characteristic.Brightness);
 
-  if (currentBrightness.value != newBrightness) {
+  if (currentBrightness.value !== newBrightness) {
     this.log(
-      "%s - Updated brightness: %s%",
+      '%s - Updated brightness: %s%',
       this.accessory.displayName,
-      newBrightness
+      newBrightness,
     );
     currentBrightness.updateValue(newBrightness);
     this.brightness = newBrightness;
@@ -1172,7 +1183,7 @@ WemoAccessory.prototype.updateConsumption = function (raw) {
   var consumption = service.getCharacteristic(Consumption);
 
   if (consumption.value !== value) {
-    this.log("%s - Consumption: %sw", this.accessory.displayName, value);
+    this.log('%s - Consumption: %sw', this.accessory.displayName, value);
     consumption.setValue(value);
   }
 
@@ -1181,32 +1192,32 @@ WemoAccessory.prototype.updateConsumption = function (raw) {
 
 WemoAccessory.prototype.updateCurrentDoorState = function (
   value,
-  actualFeedback
+  actualFeedback,
 ) {
   var state;
 
   switch (value) {
     case Characteristic.CurrentDoorState.OPEN:
-      state = "Open";
+      state = 'Open';
       break;
     case Characteristic.CurrentDoorState.CLOSED:
-      state = "Closed";
+      state = 'Closed';
       break;
     case Characteristic.CurrentDoorState.OPENING:
-      state = "Opening";
+      state = 'Opening';
       break;
     case Characteristic.CurrentDoorState.CLOSING:
-      state = "Closing";
+      state = 'Closing';
       break;
     case Characteristic.CurrentDoorState.STOPPED:
-      state = "Stopped";
+      state = 'Stopped';
       break;
   }
 
   this.log(
-    "%s - Get Current Door State: %s",
+    '%s - Get Current Door State: %s',
     this.accessory.displayName,
-    state
+    state,
   );
 
   this.accessory
@@ -1237,31 +1248,31 @@ WemoAccessory.prototype.updateMotionDetected = function (state) {
     return;
   }
 
-  if (value === true || noMotionTimer == 0) {
+  if (value === true || noMotionTimer === 0) {
     if (this.motionTimer) {
-      this.log("%s - no motion timer stopped", this.accessory.displayName);
+      this.log('%s - no motion timer stopped', this.accessory.displayName);
       clearTimeout(this.motionTimer);
       delete this.motionTimer;
     }
 
     this.log(
-      "%s - Motion Sensor: %s",
+      '%s - Motion Sensor: %s',
       this.accessory.displayName,
-      value ? "Detected" : "Clear"
+      value ? 'Detected' : 'Clear',
     );
     motionDetected.setValue(value);
   } else {
     this.log(
-      "%s - no motion timer started [%d secs]",
+      '%s - no motion timer started [%d secs]',
       this.accessory.displayName,
-      noMotionTimer
+      noMotionTimer,
     );
     clearTimeout(this.motionTimer);
     this.motionTimer = setTimeout(
-      function (self) {
+      (self) => {
         self.log(
-          "%s - Motion Sensor: Clear; no motion timer completed",
-          self.accessory.displayName
+          '%s - Motion Sensor: Clear; no motion timer completed',
+          self.accessory.displayName,
         );
         self.accessory
           .getService(Service.MotionSensor)
@@ -1270,14 +1281,14 @@ WemoAccessory.prototype.updateMotionDetected = function (state) {
         delete self.motionTimer;
       },
       noMotionTimer * 1000,
-      this
+      this,
     );
   }
 };
 
 WemoAccessory.prototype.updateMakerMode = function () {
   // SwitchMode - Momentary
-  if (this.accessory.context.switchMode == RELAY_MODE_MOMENTARY) {
+  if (this.accessory.context.switchMode === RELAY_MODE_MOMENTARY) {
     if (this.accessory.context.serviceType === undefined) {
       this.accessory.context.serviceType = Service.GarageDoorOpener.UUID;
     }
@@ -1287,11 +1298,11 @@ WemoAccessory.prototype.updateMakerMode = function () {
         if (this.accessory.getService(Service.GarageDoorOpener) === undefined) {
           this.accessory.addService(
             Service.GarageDoorOpener,
-            this.accessory.displayName
+            this.accessory.displayName,
           );
           this.addEventHandler(
             Service.GarageDoorOpener,
-            Characteristic.TargetDoorState
+            Characteristic.TargetDoorState,
           );
         }
 
@@ -1321,7 +1332,7 @@ WemoAccessory.prototype.updateMakerMode = function () {
 WemoAccessory.prototype.updateOutletInUse = function (state) {
   state = state | 0;
 
-  var value = state == 1;
+  var value = state === 1;
   var service =
     this.accessory.getService(Service.Switch) ||
     this.accessory.getService(Service.Outlet);
@@ -1329,9 +1340,9 @@ WemoAccessory.prototype.updateOutletInUse = function (state) {
 
   if (outletInUse.value !== value) {
     this.log(
-      "%s - Outlet In Use: %s",
+      '%s - Outlet In Use: %s',
       this.accessory.displayName,
-      value ? "Yes" : "No"
+      value ? 'Yes' : 'No',
     );
     outletInUse.setValue(value);
   }
@@ -1351,14 +1362,14 @@ WemoAccessory.prototype.updateSensorState = function (state, wasTriggered) {
 
     if (sensorState.value !== value) {
       this.log(
-        "%s - Sensor: %s",
+        '%s - Sensor: %s',
         this.accessory.displayName,
-        value ? "Detected" : "Not detected"
+        value ? 'Detected' : 'Not detected',
       );
       sensorState.updateValue(
         value
           ? Characteristic.ContactSensorState.CONTACT_DETECTED
-          : Characteristic.ContactSensorState.CONTACT_NOT_DETECTED
+          : Characteristic.ContactSensorState.CONTACT_NOT_DETECTED,
       );
     }
   } else if (
@@ -1368,18 +1379,18 @@ WemoAccessory.prototype.updateSensorState = function (state, wasTriggered) {
       .getService(Service.GarageDoorOpener)
       .getCharacteristic(Characteristic.TargetDoorState);
 
-    if (targetDoorState.value == Characteristic.TargetDoorState.OPEN) {
+    if (targetDoorState.value === Characteristic.TargetDoorState.OPEN) {
       // Garage door's target state is OPEN and the garage door's current state is OPEN
-      if (value == Characteristic.CurrentDoorState.OPEN) {
+      if (value === Characteristic.CurrentDoorState.OPEN) {
         if (this.isMoving !== true) {
           this.updateCurrentDoorState(
             Characteristic.CurrentDoorState.OPEN,
-            true
+            true,
           );
         } else {
           this.updateCurrentDoorState(
             Characteristic.CurrentDoorState.OPENING,
-            true
+            true,
           );
         }
       }
@@ -1387,19 +1398,19 @@ WemoAccessory.prototype.updateSensorState = function (state, wasTriggered) {
       // it must have been triggered externally by a remote control
       else if (value == Characteristic.CurrentDoorState.CLOSED) {
         this.log(
-          "%s - Set Target Door State: Closed (triggered by External)",
-          this.accessory.displayName
+          '%s - Set Target Door State: Closed (triggered by External)',
+          this.accessory.displayName,
         );
         delete this.isMoving;
         targetDoorState.updateValue(Characteristic.TargetDoorState.CLOSED);
         this.updateCurrentDoorState(
           Characteristic.CurrentDoorState.CLOSED,
-          true
+          true,
         );
       }
-    } else if (targetDoorState.value == Characteristic.TargetDoorState.CLOSED) {
+    } else if (targetDoorState.value === Characteristic.TargetDoorState.CLOSED) {
       // Garage door's target state is CLOSED and the garage door's current state is CLOSED
-      if (value == Characteristic.CurrentDoorState.CLOSED) {
+      if (value === Characteristic.CurrentDoorState.CLOSED) {
         delete this.isMoving;
 
         if (this.movingTimer) {
@@ -1409,15 +1420,15 @@ WemoAccessory.prototype.updateSensorState = function (state, wasTriggered) {
 
         this.updateCurrentDoorState(
           Characteristic.CurrentDoorState.CLOSED,
-          true
+          true,
         );
       }
       // Garage door's target state is CLOSED, but the garage door's current state is OPEN,
       // it must have been triggered externally by a remote control
-      else if (value == Characteristic.CurrentDoorState.OPEN) {
+      else if (value === Characteristic.CurrentDoorState.OPEN) {
         this.log(
-          "%s - Set Target Door State: Open (triggered by External)",
-          this.accessory.displayName
+          '%s - Set Target Door State: Open (triggered by External)',
+          this.accessory.displayName,
         );
         targetDoorState.updateValue(Characteristic.TargetDoorState.OPEN);
 
@@ -1443,28 +1454,28 @@ WemoAccessory.prototype.updateSwitchState = function (state) {
 
   if (switchState.value !== value) {
     this.log(
-      "%s - Get state: %s",
+      '%s - Get state: %s',
       this.accessory.displayName,
-      value ? "On" : "Off"
+      value ? 'On' : 'Off',
     );
     switchState.updateValue(value);
 
     // for dimmer, poll brightness for ON events (supports night mode)
-    if (value && this.device.deviceType === Wemo.DEVICE_TYPE.Dimmer) {
+    if (value && this.device.deviceType === DEVICE_TYPE.Dimmer) {
       this.client.getBrightness(
-        function (err, brightness) {
+        (err, brightness) => {
           if (err) {
-            this.log("%s - Error ON brightness", this.accessory.displayName);
+            this.log('%s - Error ON brightness', this.accessory.displayName);
             return;
           }
           this.updateBrightness(brightness);
-        }.bind(this)
+        },
       );
     }
 
     if (
       value === false &&
-      this.device.deviceType === Wemo.DEVICE_TYPE.Insight
+      this.device.deviceType === DEVICE_TYPE.Insight
     ) {
       this.updateOutletInUse(0);
       this.updateConsumption(0);
@@ -1486,11 +1497,11 @@ WemoAccessory.prototype.updateTotalConsumption = function (raw, raw2) {
 
   if (totalConsumption.value !== value) {
     this.log(
-      "%s - Total On Time: %s hours",
+      '%s - Total On Time: %s hours',
       this.accessory.displayName,
-      onHours
+      onHours,
     ); // new log entry
-    this.log("%s - Total Consumption: %skWh", this.accessory.displayName, kWh); // log correct kWh
+    this.log('%s - Total Consumption: %skWh', this.accessory.displayName, kWh); // log correct kWh
     totalConsumption.updateValue(value);
   }
 
@@ -1509,14 +1520,14 @@ function WemoLinkAccessory(log, accessory, link, device) {
 
   this.accessory
     .getService(Service.AccessoryInformation)
-    .setCharacteristic(Characteristic.Manufacturer, "Belkin WeMo")
-    .setCharacteristic(Characteristic.Model, "Dimmable Bulb")
+    .setCharacteristic(Characteristic.Manufacturer, 'Belkin WeMo')
+    .setCharacteristic(Characteristic.Model, 'Dimmable Bulb')
     .setCharacteristic(Characteristic.SerialNumber, device.deviceId);
 
   this.accessory.on(
-    "identify",
-    function (paired, callback) {
-      this.log("%s - Identify", this.accessory.displayName);
+    'identify',
+    (paired, callback) => {
+      this.log('%s - Identify', this.accessory.displayName);
 
       var switchState = this.accessory
         .getService(Service.Lightbulb)
@@ -1533,12 +1544,12 @@ function WemoLinkAccessory(log, accessory, link, device) {
         switchState.setValue(true);
         count++;
 
-        if (count == 6) {
+        if (count === 6) {
           callback();
           return;
         }
 
-        setTimeout(function () {
+        setTimeout(() => {
           setOff();
         }, 500);
       }
@@ -1547,16 +1558,16 @@ function WemoLinkAccessory(log, accessory, link, device) {
         switchState.setValue(false);
         count++;
 
-        if (count == 6) {
+        if (count === 6) {
           callback();
           return;
         }
 
-        setTimeout(function () {
+        setTimeout(() => {
           setOn();
         }, 750);
       }
-    }.bind(this)
+    },
   );
 
   this.addEventHandlers();
@@ -1564,10 +1575,10 @@ function WemoLinkAccessory(log, accessory, link, device) {
 }
 
 WemoLinkAccessory.OPTIONS = {
-  Brightness: "10008",
-  Color: "10300",
-  Switch: "10006",
-  Temperature: "30301",
+  Brightness: '10008',
+  Color: '10300',
+  Switch: '10006',
+  Temperature: '30301',
 };
 
 WemoLinkAccessory.prototype.addEventHandler = function (characteristic) {
@@ -1581,13 +1592,13 @@ WemoLinkAccessory.prototype.addEventHandler = function (characteristic) {
 
   switch (characteristic) {
     case Characteristic.On:
-      object.on("set", this.setSwitchState.bind(this));
+      object.on('set', this.setSwitchState.bind(this));
       break;
     case Characteristic.Brightness:
-      object.on("set", this.setBrightness.bind(this));
+      object.on('set', this.setBrightness.bind(this));
       break;
     case Characteristic.ColorTemperature:
-      object.on("set", this.setColorTemperature.bind(this));
+      object.on('set', this.setColorTemperature.bind(this));
       break;
   }
 };
@@ -1603,7 +1614,7 @@ WemoLinkAccessory.prototype.getSwitchState = function (callback) {
 
   this.client.getDeviceStatus(
     this.device.deviceId,
-    function (err, capabilities) {
+    (err, capabilities) => {
       if (err) {
         callback(null);
         return;
@@ -1615,29 +1626,29 @@ WemoLinkAccessory.prototype.getSwitchState = function (callback) {
       ) {
         // we've get no data in the capabilities array, so it's off
         this.log(
-          "Offline: %s [%s]",
+          'Offline: %s [%s]',
           this.accessory.displayName,
-          this.device.deviceId
+          this.device.deviceId,
         );
         callback(null);
         return;
       }
 
       this.log(
-        "Online: %s [%s]",
+        'Online: %s [%s]',
         this.accessory.displayName,
-        this.device.deviceId
+        this.device.deviceId,
       );
 
       var value = this.updateSwitchState(
-        capabilities[WemoLinkAccessory.OPTIONS.Switch]
+        capabilities[WemoLinkAccessory.OPTIONS.Switch],
       );
       this.updateBrightness(capabilities[WemoLinkAccessory.OPTIONS.Brightness]);
       this.updateColorTemperature(
-        capabilities[WemoLinkAccessory.OPTIONS.Temperature]
+        capabilities[WemoLinkAccessory.OPTIONS.Temperature],
       );
       callback(null, value);
-    }.bind(this)
+    },
   );
 };
 
@@ -1650,21 +1661,21 @@ WemoLinkAccessory.prototype.observeDevice = function () {
 
   // register eventhandler
   this.client.on(
-    "statusChange",
-    function (deviceId, capabilityId, value) {
+    'statusChange',
+    (deviceId, capabilityId, value) => {
       if (this.device.deviceId !== deviceId) {
         return;
       }
 
       this.statusChange(deviceId, capabilityId, value);
-    }.bind(this)
+    },
   );
 };
 
 WemoLinkAccessory.prototype.setBrightness = function (value, callback) {
   callback = callback || function () {};
 
-  if (this.brightness == value) {
+  if (this.brightness === value) {
     callback(null);
     return;
   }
@@ -1673,7 +1684,7 @@ WemoLinkAccessory.prototype.setBrightness = function (value, callback) {
 
   //defer the actual update to smooth out changes from sliders
   setTimeout(
-    function (caller, value) {
+    (caller, value) => {
       //check that we actually have a change to make and that something
       //hasn't tried to update the brightness again in the last 0.1 seconds
       if (caller.brightness !== value && caller._brightness == value) {
@@ -1681,20 +1692,20 @@ WemoLinkAccessory.prototype.setBrightness = function (value, callback) {
           caller.device.deviceId,
           WemoLinkAccessory.OPTIONS.Brightness,
           (value * 255) / 100,
-          function (err, response) {
+          ((err, response) => {
             caller.log(
-              "%s - Set brightness: %s%",
+              '%s - Set brightness: %s%',
               caller.accessory.displayName,
-              value
+              value,
             );
             caller.brightness = value;
-          }.bind(caller)
+          }).bind(caller),
         );
       }
     },
     100,
     this,
-    value
+    value,
   );
 
   callback(null);
@@ -1707,7 +1718,7 @@ WemoLinkAccessory.prototype.setColorTemperature = function (value, callback) {
     .getService(Service.Lightbulb)
     .getCharacteristic(Characteristic.ColorTemperature);
 
-  if (this.temperature == value) {
+  if (this.temperature === value) {
     callback(null);
     return;
   }
@@ -1722,29 +1733,29 @@ WemoLinkAccessory.prototype.setColorTemperature = function (value, callback) {
 
   //defer the actual update to smooth out changes from sliders
   setTimeout(
-    function (caller, value) {
+    (caller, value) => {
       //check that we actually have a change to make and that something
       //hasn't tried to update the temperature again in the last 0.1 seconds
       if (caller.temperature !== value && caller._temperature == value) {
         caller.client.setDeviceStatus(
           caller.device.deviceId,
           WemoLinkAccessory.OPTIONS.Temperature,
-          value + ":0",
-          function (err, response) {
+          value + ':0',
+          ((err, response) => {
             caller.log(
-              "%s - Set color temperature: %s (%sK)",
+              '%s - Set color temperature: %s (%sK)',
               caller.accessory.displayName,
               value,
-              caller.miredKelvin(value)
+              caller.miredKelvin(value),
             );
             caller.temperature = value;
-          }.bind(caller)
+          }).bind(caller),
         );
       }
     },
     100,
     this,
-    value
+    value,
   );
 
   callback(null);
@@ -1757,24 +1768,24 @@ WemoLinkAccessory.prototype.setSwitchState = function (state, callback) {
     .getCharacteristic(Characteristic.On);
   callback = callback || function () {};
 
-  if (switchState.value == value) {
+  if (switchState.value === value) {
     callback(null);
     return;
   }
 
   this.log(
-    "%s - Set state: %s",
+    '%s - Set state: %s',
     this.accessory.displayName,
-    value ? "On" : "Off"
+    value ? 'On' : 'Off',
   );
   this.client.setDeviceStatus(
     this.device.deviceId,
     WemoLinkAccessory.OPTIONS.Switch,
     value,
-    function (err, response) {
+    (err, response) => {
       this.device.capabilities[WemoLinkAccessory.OPTIONS.Switch] = value;
       callback(null);
-    }.bind(this)
+    },
   );
 };
 
@@ -1784,19 +1795,19 @@ WemoLinkAccessory.prototype.setupDevice = function (link, device) {
   this.client = wemo.client(link, this.log);
 
   this.client.on(
-    "error",
-    function (err) {
-      this.log("%s reported error %s", this.accessory.displayName, err.code);
-    }.bind(this)
+    'error',
+    (err) => {
+      this.log('%s reported error %s', this.accessory.displayName, err.code);
+    },
   );
 };
 
 WemoLinkAccessory.prototype.statusChange = function (
   deviceId,
   capabilityId,
-  value
+  value,
 ) {
-  if (this.device.capabilities[capabilityId] == value) {
+  if (this.device.capabilities[capabilityId] === value) {
     return;
   }
 
@@ -1813,18 +1824,18 @@ WemoLinkAccessory.prototype.statusChange = function (
       this.updateColorTemperature(value);
       break;
     default:
-      this.log("This capability (%s) not implemented", capabilityId);
+      this.log('This capability (%s) not implemented', capabilityId);
   }
 };
 
 WemoLinkAccessory.prototype.updateBrightness = function (capability) {
-  var value = Math.round((capability.split(":").shift() * 100) / 255);
+  var value = Math.round((capability.split(':').shift() * 100) / 255);
   var brightness = this.accessory
     .getService(Service.Lightbulb)
     .getCharacteristic(Characteristic.Brightness);
 
-  if (brightness.value != value) {
-    this.log("%s - Get brightness: %s%", this.accessory.displayName, value);
+  if (brightness.value !== value) {
+    this.log('%s - Get brightness: %s%', this.accessory.displayName, value);
     brightness.updateValue(value);
     this.brightness = value;
   }
@@ -1842,15 +1853,15 @@ WemoLinkAccessory.prototype.updateColorTemperature = function (capability) {
     return;
   }
 
-  var value = Math.round(capability.split(":").shift());
+  var value = Math.round(capability.split(':').shift());
   var temperature = service.getCharacteristic(Characteristic.ColorTemperature);
 
-  if (temperature.value != value) {
+  if (temperature.value !== value) {
     this.log(
-      "%s - Get color temperature: %s (%sK)",
+      '%s - Get color temperature: %s (%sK)',
       this.accessory.displayName,
       value,
-      this.miredKelvin(value)
+      this.miredKelvin(value),
     );
     temperature.updateValue(value);
   }
@@ -1866,11 +1877,11 @@ WemoLinkAccessory.prototype.updateSwitchState = function (state) {
     .getService(Service.Lightbulb)
     .getCharacteristic(Characteristic.On);
 
-  if (switchState.value != value) {
+  if (switchState.value !== value) {
     this.log(
-      "%s - Get state: %s",
+      '%s - Get state: %s',
       this.accessory.displayName,
-      value ? "On" : "Off"
+      value ? 'On' : 'Off',
     );
     switchState.updateValue(value);
   }

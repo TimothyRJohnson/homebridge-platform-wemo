@@ -1,7 +1,19 @@
-# Ignore compiled code
-dist
+# Ignore source code
+src
 
 # ------------- Defaults ------------- #
+
+# eslint
+.eslintrc
+
+# typescript
+tsconfig.json
+
+# vscode
+.vscode
+
+# nodemon
+nodemon.json
 
 # Logs
 logs
@@ -54,9 +66,6 @@ web_modules/
 
 # Optional npm cache directory
 .npm
-.node-version
-*.bak
-.idea/
 
 # Optional eslint cache
 .eslintcache
@@ -122,8 +131,5 @@ dist
 .yarn/build-state.yml
 .pnp.*
 
-# Homebridge Testing
-persist/
-
-# Mac
-.DS_Store
+# Plugin Logos
+honeywell/
